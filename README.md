@@ -1,30 +1,84 @@
-# 🍅 Tomato Leaf Disease Classification Using Deep Feature Extraction and SVM
+# 🍅 Tomato Leaf Disease Classification Using ResNet50 & MobileNet Feature Extractors with MLP
 
-This project implements a deep learning and machine learning pipeline for classifying **tomato leaf diseases** using pretrained CNNs (ResNet50 and MobileNet) for feature extraction and a **Support Vector Machine (SVM)** for final classification. It is based on the SPIE paper:
+This repository implements a deep feature extraction and lightweight classification pipeline for detecting tomato leaf diseases using **ResNet50** and **MobileNet** as feature extractors, and a **Multi-Layer Perceptron (MLP)** with three hidden layers as the final classifier.
 
-> **Comparative Evaluation of ResNet50 and MobileNet Feature Extractors for Tomato Leaf Disease Classification Using MLP**  
+> 📄 **Based on the SPIE conference paper**:  
+> *Comparative Evaluation of ResNet50 and MobileNet Feature Extractors for Tomato Leaf Disease Classification Using MLP*  
 > Md. Sami Ul Hoque, et al. — SPIE Defense + Commercial Sensing, 2024
 
 ---
 
-## 📄 Overview
+## 🎯 Objective
 
-This repository demonstrates:
-- Deep feature extraction from ResNet50 and MobileNet
-- Dataset splitting with stratification
-- Classification using a radial basis function (RBF) kernel SVM
-- Performance evaluation using accuracy, F1-score, and confusion matrix
+To evaluate and compare ResNet50 and MobileNet as deep feature extractors for plant disease classification using an MLP classifier in terms of:
 
-The compressed feature files are used to meet GitHub's file size limits.
+- Classification performance (accuracy, precision, recall, F1-score)
+- Computational efficiency (training time, memory usage)
+- Deployment feasibility in edge/mobile environments
 
 ---
 
-## 🧠 Key Components
+## 🧪 Methodology
 
-- 📂 Dataset: Tomato Leaf Disease dataset (10 classes)
-- 🧠 Feature Extractors: ResNet50 and MobileNet (pretrained)
-- 🧪 Classifier: SVM with RBF kernel
-- 📦 Compressed feature files using `.npz` for GitHub compatibility
+### 📸 Dataset
+- 10,000 RGB images of tomato leaves
+- 10 classes: 9 disease types + healthy
+- Balanced via undersampling and augmentation
+- Split: 70% train, 15% validation, 15% test (stratified)
+
+### 🧹 Preprocessing
+- Resized to 224×224
+- Normalized pixel values [0, 1]
+- Augmentations: rotation, flipping, contrast, Gaussian noise
+
+### 🔍 Feature Extraction
+- **ResNet50**: 2048D features (after global average pooling)
+- **MobileNet**: 1024D features (depthwise separable convolutions)
+- Fully connected layers removed
+
+### 📉 Dimensionality Reduction
+- **PCA** used to retain 95% variance
+- Helps reduce overfitting and computational load
+
+### 🧠 MLP Classifier
+- 3 hidden layers: 1024 → 512 → 256 units
+- Activations: ReLU, LeakyReLU, Swish
+- Dropout: 0.3 | Batch Norm | L2 regularization
+- Output layer: Softmax (10 classes)
+- Loss: Categorical Crossentropy  
+- Optimizer: Adam  
+- Epochs: 80 with Early Stopping  
+- Learning rate:
+  - 0.001 (ResNet50 features)
+  - 0.0001 (MobileNet features)
+
+---
+
+## 🧠 Results
+
+| Model      | Accuracy | F1 Score | Training Time | GPU Memory |
+|------------|----------|----------|----------------|------------|
+| ResNet50   | 92.53%   | 92.54%   | 4.81s (80 epochs) | 2901 MB |
+| MobileNet  | 92.00%   | 91.99%   | 0.57s (80 epochs) | 113 MB  |
+
+- 🟢 **ResNet50**: Better accuracy but higher resource use  
+- 🟢 **MobileNet**: Slightly lower accuracy, but dramatically more efficient for edge deployment
+
+---
+
+## 📦 Compressed Features
+
+Due to GitHub’s 2GB limit, MobileNet `.npy` features are compressed:
+
+```bash
+features/features_mobilenet_compressed.npz
+```
+
+Load using:
+```python
+import numpy as np
+data = np.load("features/features_mobilenet_compressed.npz", allow_pickle=True)["data"]
+```
 
 ---
 
@@ -36,8 +90,8 @@ The compressed feature files are used to meet GitHub's file size limits.
  ┃ ┣ 📄 features_resnet.npy
  ┃ ┣ 📄 features_mobilenet_compressed.npz
  ┃ ┣ 📄 labels.npy
- ┣ 📄 Leaf_Code.ipynb              # Main Jupyter Notebook
- ┣ 📄 compress_npy.py              # Script to compress .npy to .npz
+ ┣ 📄 Leaf_Code.ipynb              # Main notebook (training + plots)
+ ┣ 📄 compress_npy.py              # Compress .npy to .npz
  ┣ 📄 README.md
  ┗ 📄 requirements.txt             # Python dependencies
 ```
@@ -46,83 +100,41 @@ The compressed feature files are used to meet GitHub's file size limits.
 
 ## 🚀 How to Run
 
-### 1. Clone the repo
+### 1. Clone and Install
 
 ```bash
 git clone https://github.com/RedHood316/Tomato-Leaf-Disease.git
 cd Tomato-Leaf-Disease
-```
-
-### 2. Install required packages
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 3. Run the notebook or script
-
-Use the notebook:
+### 2. Launch Notebook
 
 ```bash
 jupyter notebook Leaf_Code.ipynb
 ```
 
-Or extract compressed features in Python:
-
-```python
-import numpy as np
-features = np.load('features/features_mobilenet_compressed.npz', allow_pickle=True)['data']
-```
-
 ---
 
-## 📊 Evaluation Results
-
-Using **ResNet50 features + SVM**:
-
-- ✅ Accuracy: ~92.5%
-- 📈 F1-Score: ~92.5%
-- 🧮 Multi-class classification across 10 tomato leaf disease categories
-
-Confusion matrix and classification report are generated using `sklearn` and `seaborn`.
-
----
-
-## 📦 Large File Notice
-
-⚠️ The original file `features/features_mobilenet.npy` exceeded GitHub's 2GB LFS limit.  
-We instead use a compressed version:
-
-```
-features/features_mobilenet_compressed.npz (961 MB)
-```
-
-You can decompress it using:
-
-```python
-data = np.load('features/features_mobilenet_compressed.npz', allow_pickle=True)['data']
-```
-
----
-
-## 🧠 Citation
+## 📚 Citation
 
 > Md Sami Ul Hoque, Julian Rene Cuellar Buritica, Al Mahmud, Mahdi Kargar Nigjeh, Robert Leander, and Scott Umbaugh.  
-> _Comparative Evaluation of ResNet50 and MobileNet Feature Extractors for Tomato Leaf Disease Classification Using MLP_,  
-> SPIE Defense + Commercial Sensing, 2024.
+> *Comparative Evaluation of ResNet50 and MobileNet Feature Extractors for Tomato Leaf Disease Classification Using MLP*,  
+> SPIE Defense + Commercial Sensing, 2024. [DOI (if applicable)]
 
 ---
 
 ## 🙏 Acknowledgments
 
-Special thanks to **Dr. Scott Umbaugh** and the CVIP Lab at **Southern Illinois University Edwardsville** for their guidance and support.
+Special thanks to **Dr. Scott Umbaugh** and the **CVIP Lab** at **Southern Illinois University Edwardsville** for their mentorship and support.
 
 ---
 
-## 📌 Future Work
+## 🔮 Future Work
 
-- Add PCA-based feature reduction
-- Compare SVM with MLP and decision tree classifiers
-- Deploy real-time diagnosis app for edge devices
+- Fine-tuning MobileNet with attention mechanisms
+- Integration with edge devices (Raspberry Pi, Jetson Nano)
+- Explainable AI (XAI) visualizations
+- Field condition evaluation (occlusion, variable lighting)
 
 ---
